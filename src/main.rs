@@ -1,24 +1,25 @@
 use anyhow::Ok;
 use anyhow::Result;
-use neurorust::loss::functions::LossFunction;
-use neurorust::loss::functions::LossKind;
-use neurorust::matrix;
-use neurorust::network::core::Network;
-use neurorust::{layer::config::LayerConfig, linalg::matrix::Matrix};
+use zerozen::activations::functions::ActivationKind;
+use zerozen::loss::functions::LossFunction;
+use zerozen::loss::functions::LossKind;
+use zerozen::matrix;
+use zerozen::network::core::Network;
+use zerozen::{layer::config::LayerConfig, linalg::matrix::Matrix};
 fn basicxor() -> Result<()> {
     let mut net = Network::new(
         &[
             LayerConfig {
                 neurons: 3,
-                activator: neurorust::activations::functions::ActivationKind::LeakyReLU(0.1),
+                activator: ActivationKind::LeakyReLU(0.01),
             },
             LayerConfig {
                 neurons: 1,
-                activator: neurorust::activations::functions::ActivationKind::Sigmoid,
+                activator: ActivationKind::Sigmoid,
             },
         ],
         2,
-        0.05,
+        0.5,
         LossKind::MeanSquaredError,
     );
     let input = matrix!(0.0,0.0;
