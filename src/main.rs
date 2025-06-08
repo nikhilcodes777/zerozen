@@ -10,7 +10,7 @@ fn basicxor() -> Result<()> {
         &[
             LayerConfig {
                 neurons: 3,
-                activator: neurorust::activations::functions::ActivationKind::Tanh,
+                activator: neurorust::activations::functions::ActivationKind::LeakyReLU(0.1),
             },
             LayerConfig {
                 neurons: 1,

@@ -6,7 +6,7 @@ pub enum ActivationKind {
     Sigmoid,
     ReLU,
     Tanh,
-    LeakyReLU,
+    LeakyReLU(f64),
 }
 pub trait ActivationFunction {
     fn activate(&self, mat: &Matrix) -> Matrix;
@@ -20,7 +20,7 @@ impl ActivationFunction for ActivationKind {
             ActivationKind::Sigmoid => mat.mapelements(|x| 1.0 / (1.0 + (-x).exp())),
             ActivationKind::ReLU => mat.mapelements(|x| x.max(0.0)),
             ActivationKind::Tanh => mat.mapelements(|x| x.tanh()),
-            ActivationKind::LeakyReLU => mat.mapelements(|x| x.max(0.01 * x)),
+            ActivationKind::LeakyReLU(f) => mat.mapelements(|x| x.max(f * x)),
         }
     }
 
@@ -30,7 +30,7 @@ impl ActivationFunction for ActivationKind {
             ActivationKind::Sigmoid => mat.mapelements(|x| x * (1.0 - x)),
             ActivationKind::ReLU => mat.mapelements(|x| if x > 0.0 { 1.0 } else { 0.0 }),
             ActivationKind::Tanh => mat.mapelements(|x| 1.0 - x.powi(2)),
-            ActivationKind::LeakyReLU => mat.mapelements(|x| if x > 0.0 { 1.0 } else { 0.01 }),
+            ActivationKind::LeakyReLU(f) => mat.mapelements(|x| if x > 0.0 { 1.0 } else { *f }),
         }
     }
 }
