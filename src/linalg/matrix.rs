@@ -1,7 +1,7 @@
 use ::anyhow::{anyhow, Result};
 use rand::Rng;
 use std::fmt;
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Matrix {
     pub rows: usize,
     pub cols: usize,
@@ -57,7 +57,7 @@ impl Matrix {
         self.data[i * self.cols + j] = value;
         Ok(())
     }
-    pub fn shape(self: &Self) -> (usize, usize) {
+    pub fn shape(&self) -> (usize, usize) {
         (self.rows, self.cols)
     }
     pub fn zeros(rows: usize, cols: usize) -> Self {
@@ -104,7 +104,7 @@ impl Matrix {
         Self { rows, cols, data }
     }
 
-    pub fn mapelements(self: &Self, func: impl Fn(f64) -> f64) -> Self {
+    pub fn mapelements(&self, func: impl Fn(f64) -> f64) -> Self {
         let data = self.data.iter().map(|&x| func(x)).collect();
         Self {
             rows: self.rows,
@@ -169,7 +169,7 @@ impl Matrix {
         })
     }
 
-    pub fn hadmard(&self, other: &Matrix) -> Result<Self> {
+    pub fn hadamard(&self, other: &Matrix) -> Result<Self> {
         if self.cols != other.cols || self.rows != other.rows {
             return Err(anyhow!(
                 "Matrix dimensions don't match for hadmard product: {}x{} vs {}x{}",
@@ -323,6 +323,19 @@ impl Matrix {
     pub fn sum_all(&self) -> f64 {
         self.data.iter().sum()
     }
+
+    pub fn add_bias_vector(&self, bias_vector: &Matrix) -> Result<Self> {
+        if bias_vector.rows != 1 || self.cols != bias_vector.cols {
+            return Err(anyhow!("Bias vector dimensions are incompatible"));
+        }
+        let mut result_data = self.data.clone();
+        for i in 0..self.rows {
+            for j in 0..self.cols {
+                result_data[i * self.cols + j] += bias_vector.data[j];
+            }
+        }
+        Matrix::new(self.rows, self.cols, result_data)
+    }
 }
 
 impl fmt::Display for Matrix {
@@ -338,6 +351,39 @@ impl fmt::Display for Matrix {
         write!(f, "]")?;
         Ok(())
     }
+}
+#[macro_export]
+macro_rules! matrix {
+    // Handle single row case
+    ($($x:expr),+ $(,)?) => {
+        {
+            let data = vec![$($x as f64),+];
+            let cols = data.len();
+            Matrix::new(1, cols, data)?
+        }
+    };
+
+    // Handle multiple rows separated by semicolons
+    ($($($x:expr),+ $(,)?);+ $(;)?) => {
+        {
+            let mut all_data = Vec::new();
+            let mut row_count = 0;
+            let mut col_count = 0;
+
+            $(
+                let row_data = vec![$($x as f64),+];
+                if row_count == 0 {
+                    col_count = row_data.len();
+                } else {
+                    assert_eq!(col_count, row_data.len(), "All rows must have the same number of columns");
+                }
+                all_data.extend(row_data);
+                row_count += 1;
+            )+
+
+            Matrix::new(row_count, col_count, all_data)?
+        }
+    };
 }
 
 #[cfg(test)]
@@ -431,7 +477,7 @@ mod tests {
         assert_eq!(matrix.cols, 2);
         assert_eq!(matrix.data.len(), 4);
         for &val in &matrix.data {
-            assert!(val >= 0.0 && val < 1.0);
+            assert!((0.0..1.0).contains(&val));
         }
     }
 
@@ -468,11 +514,11 @@ mod tests {
     fn test_hadmard() {
         let m1 = Matrix::new(2, 2, vec![1.0, 2.0, 3.0, 4.0]).unwrap();
         let m2 = Matrix::new(2, 2, vec![5.0, 6.0, 7.0, 8.0]).unwrap();
-        let result = m1.hadmard(&m2).unwrap();
+        let result = m1.hadamard(&m2).unwrap();
         assert_eq!(result.data, vec![5.0, 12.0, 21.0, 32.0]);
 
         let m3 = Matrix::new(2, 1, vec![1.0, 2.0]).unwrap();
-        assert!(m1.hadmard(&m3).is_err());
+        assert!(m1.hadamard(&m3).is_err());
     }
 
     #[test]
