@@ -11,9 +11,8 @@ pub struct Layer {
     pub weights: Matrix,
     pub biases: Matrix,
     pub activator: ActivationKind, // TODO: Implement way to pass custum functions too that implement ActivationFunction Trait
-
-    input_cache: Option<Matrix>, // Input to this layer (a from previous layer)
-    a_cache: Option<Matrix>,     // Output of this layer (after activation: activation_fn(z))
+    input_cache: Option<Matrix>,   // Input to this layer (a from previous layer)
+    a_cache: Option<Matrix>,       // Output of this layer (after activation: activation_fn(z))
 }
 impl Layer {
     pub fn new(input_neurons: usize, config: &LayerConfig) -> Self {
@@ -64,13 +63,20 @@ impl Layer {
             .expect("input_cache not set in forward pass");
 
         // Calculates dz_current
-        let d_activation = self.activator.derivative(a_current);
-        let d_z = d_output
-            .hadamard(&d_activation)
-            .expect("Hadamard for dz failed");
-
-        // Calculates dL/dW_current = dL/dz  * dz/dw
-        // dz/dw = prev_input.T
+        let d_z = match self.activator {
+            ActivationKind::SoftMax => {
+                // If using softmax with cross-entropy, d_output is already the correct gradient
+                // Otherwise, we'd need to compute the full Jacobian
+                d_output.clone()
+            }
+            _ => {
+                let d_activation = self.activator.derivative(a_current);
+                d_output
+                    .hadamard(&d_activation)
+                    .expect("Hadamard for dz failed")
+            }
+        }; // Calculates dL/dW_current = dL/dz  * dz/dw
+           // dz/dw = prev_input.T
         let grad_weights = input_prev_layer_a
             .transpose()
             .mul(&d_z)
