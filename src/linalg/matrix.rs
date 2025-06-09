@@ -258,6 +258,31 @@ impl Matrix {
         }
     }
 
+    pub fn split_matrix(&self, n: usize) -> Result<(Matrix, Matrix)> {
+        assert!(n < self.cols, "Column index out of bounds");
+
+        let mut selected_col = Vec::with_capacity(self.rows);
+        let mut remaining_data = Vec::with_capacity(self.rows * (self.cols - 1));
+
+        for row in 0..self.rows {
+            let start = row * self.cols;
+            let end = start + self.cols;
+            let row_slice = &self.data[start..end];
+
+            selected_col.push(row_slice[n]);
+
+            for (i, val) in row_slice.iter().enumerate() {
+                if i != n {
+                    remaining_data.push(*val);
+                }
+            }
+        }
+
+        let col_matrix = Matrix::new(self.rows, 1, selected_col)?;
+        let remaining_matrix = Matrix::new(self.rows, self.cols - 1, remaining_data)?;
+
+        Ok((col_matrix, remaining_matrix))
+    }
     pub fn add_scalar(&self, scalar: f64) -> Self {
         let data = self.data.iter().map(|&x| x + scalar).collect();
         Self {
