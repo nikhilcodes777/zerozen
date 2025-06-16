@@ -66,7 +66,7 @@ cargo run --example xor
 ---
 
 ## Usage Example 🚀
-
+### Basic XOR
 ```rust
 fn main() -> Result<()> {
     let mut net = Network::builder() // Builder pattern
@@ -105,7 +105,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 ```
-
+ ### [MNIST image upscaler using coordinate-based learning](./docs/image_upscaling.md)
 ---
 
 ## License 📄
