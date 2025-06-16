@@ -1,6 +1,9 @@
 use ::anyhow::{anyhow, Result};
-use rand::Rng;
+use rand::{distr::Uniform, Rng};
+use rand_distr::Normal;
 use std::fmt;
+
+use crate::{activations::functions::ActivationKind, utils::random_f64};
 #[derive(Debug, Clone)]
 pub struct Matrix {
     pub rows: usize,
@@ -96,12 +99,71 @@ impl Matrix {
             data,
         }
     }
+
     pub fn random(rows: usize, cols: usize, lowerbound: f64, upperbound: f64) -> Self {
-        let mut rng = rand::rng();
         let data = (0..rows * cols)
-            .map(|_| rng.random_range(lowerbound..upperbound))
+            .map(|_| random_f64(lowerbound, upperbound))
             .collect();
         Self { rows, cols, data }
+    }
+
+    pub fn initialize_weights(
+        neurons_in: usize,
+        neurons_out: usize,
+        activation: ActivationKind,
+    ) -> Self {
+        let mut rng = rand::rng();
+        let size = neurons_in * neurons_out;
+        let mut data = Vec::with_capacity(size);
+
+        match activation {
+            ActivationKind::Sigmoid | ActivationKind::Tanh => {
+                // Xavier/Glorot initialization - optimal for sigmoid/tanh
+                // Variance = 1 / fan_in (normal) or 6 / (fan_in + fan_out) (uniform)
+                let limit = (6.0 / (neurons_in + neurons_out) as f64).sqrt();
+                let uniform = Uniform::new(-limit, limit).unwrap();
+
+                for _ in 0..size {
+                    data.push(rng.sample(uniform));
+                }
+            }
+            ActivationKind::ReLU | ActivationKind::LeakyReLU(_) => {
+                // He initialization - optimal for ReLU-like activations
+                // Variance = 2 / fan_in
+                let std_dev = (2.0 / neurons_in as f64).sqrt();
+                let normal = Normal::new(0.0, std_dev).unwrap();
+
+                for _ in 0..size {
+                    data.push(rng.sample(normal));
+                }
+            }
+
+            ActivationKind::SoftMax => {
+                // Xavier initialization for softmax (similar to sigmoid)
+                let std_dev = (1.0 / neurons_in as f64).sqrt();
+                let normal = Normal::new(0.0, std_dev).unwrap();
+
+                for _ in 0..size {
+                    data.push(rng.sample(normal));
+                }
+            }
+
+            ActivationKind::Identity => {
+                // Small random initialization for linear activation
+                let std_dev = 0.01;
+                let normal = Normal::new(0.0, std_dev).unwrap();
+
+                for _ in 0..size {
+                    data.push(rng.sample(normal));
+                }
+            }
+        }
+
+        Matrix {
+            rows: neurons_in,
+            cols: neurons_out,
+            data,
+        }
     }
 
     pub fn mapelements(&self, func: impl Fn(f64) -> f64) -> Self {

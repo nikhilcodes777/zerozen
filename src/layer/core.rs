@@ -17,7 +17,8 @@ pub struct Layer {
 impl Layer {
     pub fn new(input_neurons: usize, config: &LayerConfig) -> Self {
         // Shape = (batch_size,features)
-        let weights = Matrix::random(input_neurons, config.neurons, 0.0, 1.0);
+        let weights = Matrix::initialize_weights(input_neurons, config.neurons, config.activator);
+        // let weights = Matrix::random(input_neurons, config.neurons, 0.0, 1.0);
         // Shape = (1,neurons)
         let biases = Matrix::zeros(1, config.neurons); // Batch Size
         Self {

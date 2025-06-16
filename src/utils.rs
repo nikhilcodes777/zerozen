@@ -3,6 +3,12 @@ use std::fs;
 use crate::linalg::matrix::Matrix;
 use anyhow::Ok;
 use anyhow::Result;
+use rand::Rng;
+
+pub fn random_f64(min: f64, max: f64) -> f64 {
+    let mut rng = rand::rng();
+    rng.random_range(min..max)
+}
 pub fn load_csv(path: &str, cols: usize) -> Result<Matrix> {
     let file = fs::read_to_string(path)?;
 
