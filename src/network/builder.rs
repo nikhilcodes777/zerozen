@@ -10,6 +10,8 @@ pub struct NetworkBuilder {
     learning_rate: f64,
     loss: LossKind,
     epochs: usize,
+    batch_size: Option<usize>,
+    shuffle: bool,
     logging: bool,
     log_level: usize,
 }
@@ -20,6 +22,8 @@ impl NetworkBuilder {
             learning_rate: 0.01,
             loss: LossKind::MeanSquaredError,
             epochs: 10 * 1000,
+            batch_size: None,
+            shuffle: true,
             logging: true,
             log_level: 200,
         }
@@ -41,6 +45,10 @@ impl NetworkBuilder {
     }
     pub fn epochs(mut self, epochs: usize) -> Self {
         self.epochs = epochs;
+        self
+    }
+    pub fn batch_size(mut self, batch_size: usize) -> Self {
+        self.batch_size = Some(batch_size);
         self
     }
 
@@ -70,6 +78,8 @@ impl NetworkBuilder {
             loss: self.loss,
             loss_history: Vec::new(),
             epochs: self.epochs,
+            batch_size: self.batch_size,
+            shuffle: self.shuffle,
             logging: self.logging,
             log_level: self.log_level,
         })
